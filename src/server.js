@@ -182,36 +182,41 @@ const YT_BLACKLIST = /interview|podcast|訪談|節目|talk show|talk\s*show|live
 
 async function searchYouTube(query, { allowLong = false } = {}) {
   if (!YT_API_KEY) return null;
-  try {
-    const { data } = await axios.get("https://www.googleapis.com/youtube/v3/search", {
-      params: {
-        part: "snippet",
-        q: `${query} official`,
-        type: "video",
-        maxResults: 8,          // 多取幾個備用
-        topicId: "/m/04rlf",    // 限音樂 topic
-        key: YT_API_KEY,
-      },
-    });
 
-    let items = data.items ?? [];
+  /* 先用嚴格條件（topicId 限音樂），沒結果再退回寬鬆搜尋 */
+  async function _search(useTopicFilter) {
+    const params = {
+      part: "snippet",
+      q: `${query} official`,
+      type: "video",
+      maxResults: 8,
+      key: YT_API_KEY,
+    };
+    if (useTopicFilter) params.topicId = "/m/04rlf";
+    const { data } = await axios.get("https://www.googleapis.com/youtube/v3/search", { params });
+    return data.items ?? [];
+  }
+
+  try {
+    let items = await _search(true);
+    if (!items.length) items = await _search(false);   // fallback：不限 topic
     if (!items.length) return null;
 
     /* 過濾明顯非音樂標題 */
     const filtered = items.filter(i => !YT_BLACKLIST.test(i.snippet?.title ?? ""));
-    if (filtered.length) items = filtered;   // 若全被過濾就 fallback 用原始結果
+    if (filtered.length) items = filtered;
 
     if (allowLong) return items[0].id.videoId;
 
-    /* 取得時長，選第一個 ≤10 分鐘的 */
+    /* 取得時長，選第一個 ≤7 分鐘的 */
     const ids = items.map(i => i.id.videoId).join(",");
     const { data: vData } = await axios.get("https://www.googleapis.com/youtube/v3/videos", {
       params: { part: "contentDetails", id: ids, key: YT_API_KEY },
     });
     for (const v of vData.items ?? []) {
-      if (parseDuration(v.contentDetails.duration) <= 420) return v.id;  // 7 分鐘
+      if (parseDuration(v.contentDetails.duration) <= 420) return v.id;
     }
-    return items[0].id.videoId;
+    return items[0].id.videoId;   // 全超過 7 分鐘就取第一個
   } catch (err) {
     console.error("[youtube]", err.response?.data?.error?.message ?? err.message);
     return null;
