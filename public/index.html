@@ -697,6 +697,9 @@
               const { videoId, autoplay } = pendingVideo;
               pendingVideo = null;
               _loadVideo(videoId, autoplay);
+            } else if (prefetchData?.youtubeId) {
+              /* prefetch 比 ytPlayer 早到時，補 cue */
+              ytPlayer.cueVideoById(prefetchData.youtubeId);
             }
           },
           onStateChange(e) {
@@ -895,6 +898,17 @@
       trackTitle.textContent  = '載入中⋯';
       trackArtist.textContent = '';
 
+      /* ── iOS / Android 自動播放解鎖 ──────────────────────────────
+         手機瀏覽器要求音頻必須在使用者手勢的「同步」呼叫中觸發。
+         若等 await fetch() 回來才 play，手勢視窗已過期會被擋。
+         桌機不需要，加了反而會干擾播放器狀態，所以只在手機執行。
+      ─────────────────────────────────────────────────────────── */
+      const _isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (_isMobile && ytReady && ytPlayer) {
+        ytPlayer.mute();
+        ytPlayer.playVideo();
+      }
+
       try {
         const data = prefetchData ?? await (await fetch('/api/now')).json();
         prefetchData = null;
@@ -903,11 +917,10 @@
         const title  = data.title  ?? data.track ?? '—';
         const artist = data.artist ?? '—';
 
-        /* 先靜音載入影片 */
+        /* 載入正確影片（若已 cue 且在播，loadVideoById 會切換） */
         if (data.youtubeId) _loadVideo(data.youtubeId, true);
 
-        /* 1.2s 後開始打字機（不論影片有沒有起來都執行）
-           onStateChange PLAYING 會負責取消靜音，讓音樂先出聲 */
+        /* 1.2s 後打字機，onStateChange PLAYING 負責取消靜音 */
         const now = new Date();
         bubbleTime.textContent = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
         setTimeout(() => {
@@ -929,10 +942,14 @@
     function prevTrack() { if (!transitioning) { transitioning = true; loadNext(); } }
     function nextTrack() { if (!transitioning) { transitioning = true; loadNext(); } }
 
-    /* ── 頁面載入時背景預取 ── */
+    /* ── 頁面載入時背景預取（同時 cue 影片給 iOS 手勢解鎖用）── */
     fetch('/api/now')
       .then(r => r.json())
-      .then(data => { prefetchData = data; })
+      .then(data => {
+        prefetchData = data;
+        /* 預先 cue 好影片，讓點擊時可以同步 playVideo() 解鎖音頻 */
+        if (data.youtubeId && ytReady) ytPlayer.cueVideoById(data.youtubeId);
+      })
       .catch(() => {});
 
     /* ── Service Worker (PWA) ── */
