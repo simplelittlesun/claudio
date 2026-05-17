@@ -438,6 +438,20 @@ app.get("/api/debug/lastfm", async (_req, res) => {
   res.json(data ?? { error: "Last.fm 沒有資料或尚未載入" });
 });
 
+app.get("/api/debug/youtube", async (_req, res) => {
+  const key = process.env.YOUTUBE_API_KEY;
+  if (!key) return res.json({ error: "YOUTUBE_API_KEY 未設定" });
+  try {
+    const { data } = await axios.get("https://www.googleapis.com/youtube/v3/search", {
+      params: { part: "snippet", q: "落日飛車 official", type: "video", maxResults: 1, key },
+    });
+    const item = data.items?.[0];
+    res.json({ ok: true, videoId: item?.id?.videoId, title: item?.snippet?.title });
+  } catch (err) {
+    res.json({ error: err.message, status: err.response?.status, detail: err.response?.data });
+  }
+});
+
 /* ══════════════════════════════════════════
    Search
 ══════════════════════════════════════════ */
