@@ -2,8 +2,18 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Claudio FM</title>
+
+  <!-- PWA / iOS -->
+  <meta name="theme-color" content="#0c0a07" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Claudio FM" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icon.svg" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
@@ -11,19 +21,18 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:           #07091a;
-      --bg-glow:      rgba(99, 102, 241, 0.07);
-      --card-top:     #0f172a;
-      --card-body:    #ffffff;
-      --accent:       #818cf8;
-      --accent-warm:  #c8956c;
-      --wave:         rgba(255, 255, 255, 0.55);
-      --wave-peak:    rgba(255, 255, 255, 0.9);
-      --on-dark:      #e2e8f0;
-      --muted-dark:   rgba(226, 232, 240, 0.35);
-      --on-light:     #0f172a;
-      --muted-light:  #94a3b8;
-      --border-card:  rgba(255, 255, 255, 0.06);
+      /* ── 黑膠 × 米色 × 褐色 ── */
+      --bg:           #0c0a07;    /* 暖黑 */
+      --card-top:     #181310;    /* 深暖棕 */
+      --card-body:    #f4efe6;    /* 米色 */
+      --accent:       #7d5c3c;    /* 深褐，主線條 */
+      --accent-mid:   #a67c52;    /* 中褐 */
+      --accent-light: #c9a880;    /* 淺褐金 */
+      --on-dark:      #e8ddd0;    /* 深底文字：暖米白 */
+      --muted-dark:   rgba(232,221,208,0.32);
+      --on-light:     #2d1f12;    /* 淺底文字：深棕 */
+      --muted-light:  #9e8874;    /* 淺底次要文字 */
+      --border-card:  rgba(125,92,60,0.18);
     }
 
     html, body {
@@ -32,6 +41,14 @@
       font-family: 'Inter', sans-serif;
       font-weight: 300;
       overflow-x: hidden;
+      /* prevent bounce scroll on iOS */
+      overscroll-behavior: none;
+    }
+
+    /* ── tap / select reset (mobile) ── */
+    button {
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
 
     /* ── ambient background ── */
@@ -44,14 +61,14 @@
       z-index: 0;
     }
     body::before {
-      width: 500px; height: 500px;
-      top: -120px; left: -100px;
-      background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%);
+      width: 520px; height: 520px;
+      top: -150px; left: -130px;
+      background: radial-gradient(circle, rgba(125,92,60,0.16) 0%, transparent 70%);
     }
     body::after {
-      width: 400px; height: 400px;
-      bottom: -80px; right: -80px;
-      background: radial-gradient(circle, rgba(200,149,108,0.1) 0%, transparent 70%);
+      width: 420px; height: 420px;
+      bottom: -100px; right: -100px;
+      background: radial-gradient(circle, rgba(180,130,80,0.09) 0%, transparent 70%);
     }
 
     /* ── scene ── */
@@ -64,6 +81,11 @@
       align-items: center;
       justify-content: center;
       padding: 2rem 1.5rem 5rem;
+      /* iOS safe area */
+      padding-top:    max(2rem, env(safe-area-inset-top, 0px));
+      padding-bottom: max(5rem, calc(3rem + env(safe-area-inset-bottom, 0px)));
+      padding-left:   max(1.5rem, env(safe-area-inset-left, 0px));
+      padding-right:  max(1.5rem, env(safe-area-inset-right, 0px));
       gap: 1.25rem;
     }
 
@@ -75,14 +97,14 @@
       overflow: hidden;
       box-shadow:
         0 0 0 1px var(--border-card),
-        0 40px 80px rgba(0, 0, 0, 0.55),
-        0 8px 24px rgba(0, 0, 0, 0.4);
+        0 40px 80px rgba(0, 0, 0, 0.6),
+        0 8px 24px  rgba(0, 0, 0, 0.45);
     }
 
     /* card – dark top */
     .card-top {
-      background: var(--card-top);
-      padding: 1.25rem 1.5rem 1.5rem;
+      background: linear-gradient(170deg, #1e1710 0%, #141008 100%);
+      padding: 1.25rem 1.5rem 1.25rem;
       position: relative;
       overflow: hidden;
     }
@@ -91,14 +113,14 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1rem;
     }
 
     .show-badge {
       font-size: 0.6rem;
       letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: var(--accent);
+      color: var(--accent-light);
       font-weight: 500;
     }
 
@@ -115,30 +137,100 @@
     .live-dot {
       width: 5px; height: 5px;
       border-radius: 50%;
-      background: var(--accent);
+      background: var(--accent-light);
     }
     .live-dot.on { animation: livepulse 2s ease-in-out infinite; }
 
     @keyframes livepulse {
-      0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(129,140,248,0.6); }
-      50%      { opacity: 0.4; box-shadow: 0 0 0 4px rgba(129,140,248,0); }
+      0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(201,168,128,0.6); }
+      50%      { opacity: 0.4; box-shadow: 0 0 0 4px rgba(201,168,128,0); }
     }
 
-    /* waveform */
-    .waveform {
+    /* ── vinyl record ── */
+    .vinyl-wrap {
+      display: flex;
+      justify-content: center;
+      padding: 0.5rem 0 0;
+      position: relative;
+    }
+
+    .vinyl {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      position: relative;
+      flex-shrink: 0;
+      /* 暖黑碟面，棕色溝紋 */
+      background:
+        radial-gradient(ellipse at 65% 22%, rgba(220,185,130,0.10) 0%, transparent 40%),
+        radial-gradient(ellipse at 28% 76%, rgba(0,0,0,0.45) 0%, transparent 44%),
+        repeating-radial-gradient(
+          circle at 50% 50%,
+          #0d0a07 0px,
+          #1c1610 1.5px,
+          #0d0a07 3px
+        );
+      box-shadow:
+        0 0 0 1.5px rgba(210,175,120,0.18),   /* 暖金邊 */
+        0 0 0 3px   rgba(0,0,0,0.72),
+        0 0 26px    rgba(125,92,60,0.22),      /* 褐色光暈 */
+        0 12px 40px rgba(0,0,0,0.85);
+      animation: vinyl-spin 4.5s linear infinite;
+      animation-play-state: paused;
+    }
+
+    .vinyl.playing { animation-play-state: running; }
+
+    @keyframes vinyl-spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    /* label：暖棕，黑膠標籤感 */
+    .vinyl::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 36% 30%, #5c3820, #2a1508);
+      border: 1px solid rgba(180,130,80,0.48);
+      box-shadow:
+        0 0 0 3.5px #0d0a07,
+        0 0 10px rgba(160,110,60,0.28);
+      z-index: 1;
+    }
+
+    /* 中心小孔 */
+    .vinyl::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #070502;
+      border: 1px solid rgba(200,155,90,0.14);
+      z-index: 2;
+    }
+
+    /* ── waveform ── */
+    .waveform-wrap {
       display: flex;
       align-items: flex-end;
+      height: 46px;
+      padding: 0 1.5rem;
       gap: 2.5px;
-      height: 52px;
+      margin-top: 0.75rem;
     }
 
     .bar {
       flex: 1;
-      background: var(--wave);
+      background: rgba(232,221,208,0.18);
       border-radius: 2px 2px 1px 1px;
-      min-height: 3px;
+      min-height: 2px;
       transform-origin: bottom;
-      transition: height 0.3s ease;
     }
 
     .bar.playing {
@@ -146,11 +238,11 @@
     }
 
     @keyframes barwave {
-      from { height: 3px;         opacity: 0.4; }
-      to   { height: var(--peak); opacity: 0.9; }
+      from { height: 2px;         opacity: 0.18; background: rgba(232,221,208,0.18); }
+      to   { height: var(--peak); opacity: 1;    background: rgba(180,130,75,0.80); }
     }
 
-    /* card – white body */
+    /* card – 米色 body */
     .card-body {
       background: var(--card-body);
       padding: 1.5rem 1.75rem 1.75rem;
@@ -190,16 +282,15 @@
     .progress-track {
       width: 100%;
       height: 1.5px;
-      background: #e2e8f0;
+      background: rgba(125,92,60,0.15);
       border-radius: 1px;
-      cursor: pointer;
       position: relative;
     }
 
     .progress-fill {
       height: 100%;
       width: 0%;
-      background: var(--accent-warm);
+      background: var(--accent-mid);
       border-radius: 1px;
       transition: width 1s linear;
     }
@@ -226,7 +317,7 @@
       background: none;
       border: none;
       cursor: pointer;
-      color: #cbd5e1;
+      color: var(--muted-light);
       padding: 0.3rem;
       display: flex;
       transition: color 0.2s;
@@ -242,18 +333,18 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #fff;
+      color: var(--card-body);
       transition: background 0.2s, transform 0.1s;
     }
-    .btn-play:hover  { background: #1e293b; }
+    .btn-play:hover  { background: var(--accent); }
     .btn-play:active { transform: scale(0.94); }
 
     /* ── chat bubble ── */
     .bubble {
       width: 100%;
       max-width: 360px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(24,19,10,0.6);
+      border: 1px solid rgba(125,92,60,0.22);
       border-radius: 16px;
       padding: 1rem 1.25rem 1.1rem;
       backdrop-filter: blur(12px);
@@ -266,9 +357,9 @@
       position: absolute;
       top: -7px; left: 24px;
       width: 12px; height: 12px;
-      background: rgba(255,255,255,0.05);
-      border-left: 1px solid rgba(255,255,255,0.08);
-      border-top: 1px solid rgba(255,255,255,0.08);
+      background: rgba(24,19,10,0.6);
+      border-left: 1px solid rgba(125,92,60,0.22);
+      border-top: 1px solid rgba(125,92,60,0.22);
       transform: rotate(45deg);
     }
 
@@ -276,7 +367,7 @@
       font-size: 0.62rem;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--accent);
+      color: var(--accent-light);
       margin-bottom: 0.55rem;
       font-weight: 500;
     }
@@ -286,7 +377,7 @@
       font-style: italic;
       font-size: 0.88rem;
       line-height: 1.75;
-      color: rgba(226, 232, 240, 0.75);
+      color: rgba(232,221,208,0.78);
       min-height: 1.5em;
     }
 
@@ -294,7 +385,7 @@
       display: inline-block;
       width: 1px;
       height: 0.9em;
-      background: var(--accent);
+      background: var(--accent-light);
       vertical-align: text-bottom;
       margin-left: 1px;
       animation: blink 1s step-end infinite;
@@ -309,23 +400,173 @@
     .bottom-bar {
       position: fixed;
       bottom: 0; left: 0; right: 0;
-      height: 2.5px;
+      /* extend into iOS home indicator area */
+      height: calc(2.5px + env(safe-area-inset-bottom, 0px));
       background: rgba(255,255,255,0.06);
       z-index: 100;
     }
 
     .bottom-fill {
-      height: 100%;
+      height: 2.5px;          /* only colour the 2.5px strip, not the safe area */
       width: 0%;
-      background: linear-gradient(90deg, var(--accent) 0%, var(--accent-warm) 100%);
+      background: linear-gradient(90deg, var(--accent) 0%, var(--accent-light) 100%);
       transition: width 1s linear;
+    }
+
+    /* ── hidden YouTube player ── */
+    #yt-player {
+      position: fixed;
+      bottom: 0; right: 0;
+      width: 1px; height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* ── start overlay ── */
+    #startOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      transition: opacity 0.9s ease;
+      /* safe area padding so content doesn't hide behind notch */
+      padding-top:    env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    #startOverlay.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .start-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.6rem;
+      font-weight: 500;
+      color: var(--on-dark);
+      letter-spacing: 0.02em;
+      margin-bottom: 0.55rem;
+    }
+
+    .start-tagline {
+      font-size: 0.62rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--muted-dark);
+      margin-bottom: 3.5rem;
+    }
+
+    .start-btn {
+      background: transparent;
+      border: 1px solid rgba(201,168,128,0.45);
+      color: var(--accent-light);
+      font-family: 'Inter', sans-serif;
+      font-weight: 400;
+      font-size: 0.72rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      padding: 0.85rem 2.8rem;
+      border-radius: 100px;
+      cursor: pointer;
+      transition: background 0.25s, border-color 0.25s, color 0.25s, transform 0.15s;
+    }
+
+    .start-btn:hover {
+      background: rgba(201,168,128,0.08);
+      border-color: var(--accent-light);
+    }
+
+    .start-btn:active { transform: scale(0.96); }
+
+    /* ── mobile-specific tweaks ── */
+
+    /* ensure card fills narrow phones with side margin */
+    @media (max-width: 400px) {
+      .card, .bubble {
+        border-radius: 18px;
+      }
+      .card-top {
+        padding: 1rem 1.25rem 1rem;
+      }
+      .card-body {
+        padding: 1.25rem 1.5rem 1.5rem;
+      }
+      .track-title {
+        font-size: 1.35rem;
+      }
+    }
+
+    /* very short screens (iPhone SE 1st gen 568px, or landscape) */
+    @media (max-height: 640px) {
+      .vinyl {
+        width: 118px;
+        height: 118px;
+      }
+      .vinyl::before {
+        width: 42px;
+        height: 42px;
+      }
+      .card-top {
+        padding-top: 0.85rem;
+        padding-bottom: 0.85rem;
+      }
+      .waveform-wrap {
+        height: 36px;
+        margin-top: 0.5rem;
+      }
+      .track-title {
+        font-size: 1.25rem;
+      }
+      .controls {
+        margin-top: 0.9rem;
+      }
+      .track-artist {
+        margin-bottom: 1rem;
+      }
+      .scene {
+        gap: 0.9rem;
+      }
+    }
+
+    /* comfortable height for start overlay on short screens */
+    @media (max-height: 580px) {
+      .start-tagline {
+        margin-bottom: 2rem;
+      }
+    }
+
+    /* make bubble slightly tighter on narrow */
+    @media (max-width: 380px) {
+      .bubble {
+        padding: 0.85rem 1rem 0.95rem;
+      }
+      .bubble-text {
+        font-size: 0.84rem;
+      }
+    }
+
+    /* ── prevent font boost on Android ── */
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
   </style>
 </head>
 <body>
 
-  <div class="scene">
+  <!-- 開始收聽 overlay -->
+  <div id="startOverlay">
+    <div class="start-logo">Claudio FM</div>
+    <div class="start-tagline">你的私人 AI 電台</div>
+    <button class="start-btn" onclick="startListening()">開始收聽</button>
+  </div>
 
+  <div class="scene">
     <div class="card">
       <div class="card-top">
         <div class="card-top-bar">
@@ -335,7 +576,14 @@
             On Air
           </span>
         </div>
-        <div class="waveform" id="waveform"></div>
+
+        <!-- 黑膠唱片 -->
+        <div class="vinyl-wrap">
+          <div class="vinyl" id="vinyl"></div>
+        </div>
+
+        <!-- 音波（黑膠下方） -->
+        <div class="waveform-wrap" id="waveform"></div>
       </div>
 
       <div class="card-body">
@@ -382,114 +630,317 @@
       <div class="bubble-meta">Claudio &bull; <span id="bubbleTime"></span></div>
       <p class="bubble-text" id="bubbleText"><span class="bubble-cursor"></span></p>
     </div>
-
   </div>
 
   <div class="bottom-bar">
     <div class="bottom-fill" id="bottomFill"></div>
   </div>
 
+  <div id="yt-player"></div>
+
   <script>
     /* ── waveform bars ── */
-    const waveform = document.getElementById('waveform');
+    const waveform  = document.getElementById('waveform');
     const BAR_COUNT = 36;
-    const bars = [];
+    const bars      = [];
 
     for (let i = 0; i < BAR_COUNT; i++) {
-      const bar = document.createElement('div');
+      const bar  = document.createElement('div');
       bar.className = 'bar';
-      const peak = 10 + Math.random() * 42;
-      const dur  = (0.55 + Math.random() * 0.6).toFixed(2);
+      const peak = 8 + Math.random() * 36;
+      const dur  = (0.5 + Math.random() * 0.6).toFixed(2);
       const del  = (Math.random() * 0.6).toFixed(2);
-      bar.style.cssText = `--peak:${peak}px; --dur:${dur}s; --delay:${del}s; height:3px;`;
+      bar.style.cssText = `--peak:${peak}px; --dur:${dur}s; --delay:${del}s; height:2px;`;
       waveform.appendChild(bar);
       bars.push(bar);
     }
 
-    /* ── state ── */
-    let playing = false;
-
-    const liveDot    = document.getElementById('liveDot');
-    const iconPlay   = document.getElementById('iconPlay');
-    const iconPause  = document.getElementById('iconPause');
-    const trackTitle  = document.getElementById('trackTitle');
-    const trackArtist = document.getElementById('trackArtist');
+    /* ── DOM refs ── */
+    const liveDot      = document.getElementById('liveDot');
+    const vinylEl      = document.getElementById('vinyl');
+    const iconPlay     = document.getElementById('iconPlay');
+    const iconPause    = document.getElementById('iconPause');
+    const trackTitle   = document.getElementById('trackTitle');
+    const trackArtist  = document.getElementById('trackArtist');
     const progressFill = document.getElementById('progressFill');
     const bottomFill   = document.getElementById('bottomFill');
     const bubbleText   = document.getElementById('bubbleText');
     const bubbleTime   = document.getElementById('bubbleTime');
 
-    /* ── typewriter ── */
-    let typeTimer = null;
+    /* ── state ── */
+    let playing          = false;
+    let elapsed          = 0;
+    let duration         = 0;
+    let ytPlayer         = null;
+    let ytReady          = false;
+    let pendingVideo     = null;    // { videoId, autoplay } queued before player ready
+    let transitioning    = false;   // 換曲中，防重複觸發
+    let prefetchData     = null;    // 頁面載入預取，點擊後直接用
+    let prefetchNext     = null;    // 播放中背景預取的下一首
+    let shouldFadeIn     = false;   // 下一首 PLAYING 時要淡入
+    let pendingBroadcast = null;    // { say, title, artist } 等音樂起來後再顯示
 
-    function typewrite(text) {
-      clearTimeout(typeTimer);
-      bubbleText.innerHTML = '<span class="bubble-cursor"></span>';
-      let i = 0;
-      const cursor = bubbleText.querySelector('.bubble-cursor');
+    /* ── fade constants ── */
+    const FADE_OUT_MS = 1200;
+    const FADE_IN_MS  = 1400;
+    const FADE_STEPS  = 30;
 
-      function step() {
-        if (i < text.length) {
-          cursor.insertAdjacentText('beforebegin', text[i++]);
-          typeTimer = setTimeout(step, 42 + Math.random() * 30);
-        }
+    /* ── YouTube IFrame API ── */
+    window.onYouTubeIframeAPIReady = function () {
+      ytPlayer = new YT.Player('yt-player', {
+        width: 1, height: 1,
+        playerVars: { autoplay: 0, controls: 0, playsinline: 1, mute: 1 },
+        events: {
+          onReady() {
+            ytReady = true;
+            if (pendingVideo) {
+              const { videoId, autoplay } = pendingVideo;
+              pendingVideo = null;
+              _loadVideo(videoId, autoplay);
+            }
+          },
+          onStateChange(e) {
+            if (e.data === YT.PlayerState.PLAYING) {
+              duration = Math.floor(ytPlayer.getDuration()) || 0;
+              document.getElementById('timeDuration').textContent = fmt(duration);
+              setPlaying(true);
+              transitioning = false;
+
+              /* 淡入 or 直接取消靜音 */
+              if (shouldFadeIn) {
+                shouldFadeIn = false;
+                doFadeIn();
+              } else {
+                ytPlayer.unMute();
+                ytPlayer.setVolume(100);
+              }
+
+              /* 換曲時（transition）的打字機由 pendingBroadcast 觸發 */
+              if (pendingBroadcast) {
+                const pb = pendingBroadcast;
+                pendingBroadcast = null;
+                setTimeout(() => {
+                  const now = new Date();
+                  bubbleTime.textContent = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+                  typewrite(pb.say ?? '', () => {
+                    trackTitle.textContent  = pb.title  ?? '—';
+                    trackArtist.textContent = pb.artist ?? '—';
+                  });
+                }, 700);
+              }
+
+              /* 開始背景預取下一首 */
+              prefetchNext = null;
+              fetch('/api/now?transition=true')
+                .then(r => r.json())
+                .then(data => { prefetchNext = data; })
+                .catch(() => {});
+            }
+            if (e.data === YT.PlayerState.PAUSED) setPlaying(false);
+            if (e.data === YT.PlayerState.ENDED)  onSongEnded();
+          },
+        },
+      });
+    };
+
+    (function () {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(tag);
+    })();
+
+    /* ── 內部 loadVideo ── */
+    function _loadVideo(videoId, autoplay = false) {
+      if (!ytReady) { pendingVideo = { videoId, autoplay }; return; }
+      if (autoplay) {
+        ytPlayer.loadVideoById(videoId);
+      } else {
+        ytPlayer.cueVideoById(videoId);
       }
-      step();
+      elapsed = 0;
+      progressFill.style.width = '0%';
+      bottomFill.style.width   = '0%';
+      document.getElementById('timeElapsed').textContent  = '0:00';
+      document.getElementById('timeDuration').textContent = '--:--';
     }
 
-    /* ── play / pause ── */
-    function togglePlay() {
-      playing = !playing;
+    /* ── 淡出（Promise） ── */
+    function fadeOut() {
+      return new Promise(resolve => {
+        if (!ytPlayer || !ytReady || !playing) { resolve(); return; }
+        const startVol = ytPlayer.isMuted() ? 0 : (ytPlayer.getVolume() || 100);
+        let step = 0;
+        const iv = setInterval(() => {
+          step++;
+          ytPlayer.setVolume(Math.max(0, Math.round(startVol * (1 - step / FADE_STEPS))));
+          if (step >= FADE_STEPS) {
+            clearInterval(iv);
+            ytPlayer.pauseVideo();
+            resolve();
+          }
+        }, FADE_OUT_MS / FADE_STEPS);
+      });
+    }
+
+    /* ── 淡入 ── */
+    function doFadeIn() {
+      ytPlayer.unMute();
+      ytPlayer.setVolume(0);
+      let step = 0;
+      const iv = setInterval(() => {
+        step++;
+        ytPlayer.setVolume(Math.round(100 * step / FADE_STEPS));
+        if (step >= FADE_STEPS) clearInterval(iv);
+      }, FADE_IN_MS / FADE_STEPS);
+    }
+
+    /* ── 播放狀態同步 ── */
+    function setPlaying(state) {
+      playing = state;
       bars.forEach(b => b.classList.toggle('playing', playing));
+      vinylEl.classList.toggle('playing', playing);
       liveDot.classList.toggle('on', playing);
       iconPlay.style.display  = playing ? 'none'  : 'block';
       iconPause.style.display = playing ? 'block' : 'none';
     }
 
-    /* ── simulated progress ── */
-    let progress = 0;
-    let elapsed  = 0;
-    const duration = 242; // seconds, placeholder
+    /* ── 播放 / 暫停 ── */
+    function togglePlay() {
+      if (!ytPlayer || !ytReady) return;
+      const state = ytPlayer.getPlayerState();
+      if (state === YT.PlayerState.PLAYING) {
+        ytPlayer.pauseVideo();
+      } else {
+        ytPlayer.playVideo();
+      }
+    }
 
+    /* ── 進度條（每秒） ── */
     setInterval(() => {
-      if (!playing) return;
-      elapsed = Math.min(elapsed + 1, duration);
-      progress = (elapsed / duration) * 100;
-      progressFill.style.width = progress + '%';
-      bottomFill.style.width   = progress + '%';
+      if (!playing || !ytPlayer || !ytReady) return;
+      elapsed = Math.floor(ytPlayer.getCurrentTime?.() ?? 0);
+      if (duration > 0) {
+        progressFill.style.width = (elapsed / duration * 100) + '%';
+        bottomFill.style.width   = (elapsed / duration * 100) + '%';
+      }
       document.getElementById('timeElapsed').textContent = fmt(elapsed);
     }, 1000);
 
     function fmt(s) {
-      return `${Math.floor(s / 60)}:${String(s % 60).padStart(2,'0')}`;
+      return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
     }
 
-    /* ── load now playing ── */
-    async function loadNow() {
+    /* ── typewriter ── */
+    let typeTimer = null;
+
+    function typewrite(text, onDone) {
+      clearTimeout(typeTimer);
+      bubbleText.innerHTML = '<span class="bubble-cursor"></span>';
+      let i = 0;
+      const cursor = bubbleText.querySelector('.bubble-cursor');
+      function step() {
+        if (i < text.length) {
+          cursor.insertAdjacentText('beforebegin', text[i++]);
+          typeTimer = setTimeout(step, 38 + Math.random() * 28);
+        } else {
+          if (onDone) onDone();
+        }
+      }
+      step();
+    }
+
+    /* ── 歌曲結束 ── */
+    function onSongEnded() {
+      if (transitioning) return;
+      transitioning = true;
+      setPlaying(false);
+      loadNext();
+    }
+
+    /* ── 取得並播放下一首 ── */
+    async function loadNext() {
       try {
-        const res  = await fetch('/api/now');
-        const data = await res.json();
-        trackTitle.textContent  = data.title  ?? data.track  ?? '—';
-        trackArtist.textContent = data.artist ?? '—';
-        document.getElementById('timeDuration').textContent = fmt(duration);
+        await fadeOut();
 
-        const now  = new Date();
-        const time = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
-        bubbleTime.textContent = time;
+        trackTitle.textContent  = '⋯';
+        trackArtist.textContent = '';
+        bubbleText.innerHTML    = '<span class="bubble-cursor"></span>';
 
-        if (data.say) typewrite(data.say);
+        const data = prefetchNext ?? await (await fetch('/api/now?transition=true')).json();
+        prefetchNext = null;
+
+        pendingBroadcast = {
+          say:    data.say    ?? '',
+          title:  data.title  ?? data.track ?? '—',
+          artist: data.artist ?? '—',
+        };
+
+        shouldFadeIn = true;
+        if (ytPlayer && ytReady) ytPlayer.setVolume(0);
+
+        if (data.youtubeId) _loadVideo(data.youtubeId, true);
+        else transitioning = false;
+
       } catch {
-        trackTitle.textContent  = '魚';
-        trackArtist.textContent = '陳綺貞 (Cheer Chen)';
-        bubbleTime.textContent  = '--:--';
-        typewrite('窗外應該已經有光了。這首歌很適合你還沒完全醒來的那幾分鐘——陳綺貞的〈魚〉。');
+        transitioning = false;
       }
     }
 
-    function prevTrack() { /* 串接 Claude 後實作 */ }
-    function nextTrack() { /* 串接 Claude 後實作 */ }
+    /* ── 點擊「開始收聽」── */
+    async function startListening() {
+      const overlay = document.getElementById('startOverlay');
+      overlay.classList.add('fade-out');
+      setTimeout(() => overlay.remove(), 900);
 
-    loadNow();
+      trackTitle.textContent  = '載入中⋯';
+      trackArtist.textContent = '';
+
+      try {
+        const data = prefetchData ?? await (await fetch('/api/now')).json();
+        prefetchData = null;
+
+        const say    = data.say    ?? '';
+        const title  = data.title  ?? data.track ?? '—';
+        const artist = data.artist ?? '—';
+
+        /* 先靜音載入影片 */
+        if (data.youtubeId) _loadVideo(data.youtubeId, true);
+
+        /* 1.2s 後開始打字機（不論影片有沒有起來都執行）
+           onStateChange PLAYING 會負責取消靜音，讓音樂先出聲 */
+        const now = new Date();
+        bubbleTime.textContent = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+        setTimeout(() => {
+          typewrite(say, () => {
+            trackTitle.textContent  = title;
+            trackArtist.textContent = artist;
+          });
+        }, 1200);
+
+      } catch {
+        trackTitle.textContent  = '魚';
+        trackArtist.textContent = '陳綺貞';
+        bubbleTime.textContent  = '--:--';
+        typewrite('窗外應該已經有光了。陳綺貞的〈魚〉。');
+      }
+    }
+
+    /* ── 上 / 下一首 ── */
+    function prevTrack() { if (!transitioning) { transitioning = true; loadNext(); } }
+    function nextTrack() { if (!transitioning) { transitioning = true; loadNext(); } }
+
+    /* ── 頁面載入時背景預取 ── */
+    fetch('/api/now')
+      .then(r => r.json())
+      .then(data => { prefetchData = data; })
+      .catch(() => {});
+
+    /* ── Service Worker (PWA) ── */
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
   </script>
 </body>
 </html>

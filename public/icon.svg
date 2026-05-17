@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- background -->
+  <rect width="512" height="512" rx="112" fill="#0c0a07"/>
+  <!-- vinyl disc grooves -->
+  <circle cx="256" cy="256" r="200" fill="#0d0a07" stroke="#1c1610" stroke-width="2"/>
+  <circle cx="256" cy="256" r="185" fill="none" stroke="#1a1510" stroke-width="1.5"/>
+  <circle cx="256" cy="256" r="170" fill="none" stroke="#1c1610" stroke-width="1.5"/>
+  <circle cx="256" cy="256" r="155" fill="none" stroke="#191410" stroke-width="1.5"/>
+  <circle cx="256" cy="256" r="140" fill="none" stroke="#1c1610" stroke-width="1.5"/>
+  <circle cx="256" cy="256" r="125" fill="none" stroke="#191410" stroke-width="1.5"/>
+  <circle cx="256" cy="256" r="110" fill="none" stroke="#1c1610" stroke-width="1.5"/>
+  <circle cx="256" cy="256" r="95"  fill="none" stroke="#191410" stroke-width="1.5"/>
+  <!-- outer ring highlight -->
+  <circle cx="256" cy="256" r="200" fill="none" stroke="rgba(210,175,120,0.18)" stroke-width="2"/>
+  <!-- label -->
+  <radialGradient id="lbl" cx="36%" cy="30%" r="70%">
+    <stop offset="0%" stop-color="#5c3820"/>
+    <stop offset="100%" stop-color="#2a1508"/>
+  </radialGradient>
+  <circle cx="256" cy="256" r="74" fill="url(#lbl)" stroke="rgba(180,130,80,0.48)" stroke-width="2"/>
+  <circle cx="256" cy="256" r="74" fill="none" stroke="#0d0a07" stroke-width="6" style="stroke-dasharray:0"/>
+  <!-- label ring border -->
+  <circle cx="256" cy="256" r="74" fill="none" stroke="rgba(180,130,80,0.4)" stroke-width="1.5"/>
+  <!-- tiny text on label: C FM -->
+  <text x="256" y="248" text-anchor="middle" font-family="Georgia, serif" font-size="22" font-weight="bold" fill="rgba(201,168,128,0.9)" letter-spacing="2">C</text>
+  <text x="256" y="272" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="rgba(201,168,128,0.6)" letter-spacing="3">FM</text>
+  <!-- center hole -->
+  <circle cx="256" cy="256" r="10" fill="#070502" stroke="rgba(200,155,90,0.14)" stroke-width="1"/>
+  <!-- warm highlight on disc -->
+  <ellipse cx="300" cy="160" rx="60" ry="40" fill="rgba(220,185,130,0.07)" transform="rotate(-15 300 160)"/>
+</svg>

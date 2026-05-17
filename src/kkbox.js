@@ -42,19 +42,27 @@ export async function getMoodStations() {
   return cachedStations;
 }
 
+/* ── per-station tracks cache（30 分鐘 TTL）── */
+const _tracksCache = new Map(); // stationId → { data, expiresAt }
+
 export async function getMoodStationTracks(stationId) {
+  const cached = _tracksCache.get(stationId);
+  if (cached && Date.now() < cached.expiresAt) return cached.data;
+
   const token = await getAccessToken();
   const { data } = await axios.get(`${API_BASE}/mood-stations/${stationId}`, {
     headers: { Authorization: `Bearer ${token}` },
     params: { territory: TERRITORY },
   });
-  return (data.tracks?.data ?? []).map((t) => ({
+  const tracks = (data.tracks?.data ?? []).map((t) => ({
     id:     t.id,
     title:  t.name,
     artist: t.album?.artist?.name ?? "—",
     album:  t.album?.name ?? "—",
     url:    t.url ?? null,
   }));
+  _tracksCache.set(stationId, { data: tracks, expiresAt: Date.now() + 30 * 60_000 });
+  return tracks;
 }
 
 export async function searchTrack(keyword, limit = 10) {
