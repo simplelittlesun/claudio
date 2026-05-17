@@ -457,6 +457,29 @@ app.get("/api/debug/youtube", async (_req, res) => {
   }
 });
 
+app.get("/api/debug/now", async (_req, res) => {
+  const result = { kkbox: null, claude: null, youtube: null, error: null };
+  try {
+    result.kkbox = "fetching...";
+    const stations = await getMoodStations();
+    result.kkbox = `ok (${stations.length} stations)`;
+
+    result.claude = "fetching...";
+    const { say, station_id } = await getRecommendation(stations.slice(0, 5));
+    result.claude = `ok — station: ${station_id}, say: ${say?.slice(0, 40)}...`;
+
+    result.youtube = "fetching...";
+    const tracks = await getMoodStationTracks(station_id);
+    const track = tracks[0];
+    const ytId = await searchYouTube(`${track.title} ${track.artist}`);
+    result.youtube = ytId ? `ok — ${track.title} / ${ytId}` : `not found for "${track.title}"`;
+
+  } catch (err) {
+    result.error = err.message;
+  }
+  res.json(result);
+});
+
 /* ══════════════════════════════════════════
    Search
 ══════════════════════════════════════════ */
