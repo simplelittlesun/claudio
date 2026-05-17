@@ -5,7 +5,6 @@ import { readFileSync, writeFileSync, existsSync } from "fs";
 import axios from "axios";
 import dotenv from "dotenv";
 import { resolve } from "path";
-import { searchTrack, getMoodStations, getMoodStationTracks } from "./kkbox.js";
 import { getRecommendation } from "./claude.js";
 
 dotenv.config({ path: resolve(dirname(fileURLToPath(import.meta.url)), "../.env"), override: true });
@@ -458,21 +457,15 @@ app.get("/api/debug/youtube", async (_req, res) => {
 });
 
 app.get("/api/debug/now", async (_req, res) => {
-  const result = { kkbox: null, claude: null, youtube: null, error: null };
+  const result = { claude: null, youtube: null, error: null };
   try {
-    result.kkbox = "fetching...";
-    const stations = await getMoodStations();
-    result.kkbox = `ok (${stations.length} stations)`;
-
     result.claude = "fetching...";
-    const { say, station_id } = await getRecommendation(stations.slice(0, 5));
-    result.claude = `ok — station: ${station_id}, say: ${say?.slice(0, 40)}...`;
+    const { say, title, artist } = await getRecommendation({ recentTracks: [] });
+    result.claude = `ok — ${title} / ${artist}`;
 
     result.youtube = "fetching...";
-    const tracks = await getMoodStationTracks(station_id);
-    const track = tracks[0];
-    const ytId = await searchYouTube(`${track.title} ${track.artist}`);
-    result.youtube = ytId ? `ok — ${track.title} / ${ytId}` : `not found for "${track.title}"`;
+    const ytId = await searchYouTube(`${title} ${artist}`);
+    result.youtube = ytId ? `ok — ${ytId}` : `not found for "${title} ${artist}"`;
 
   } catch (err) {
     result.error = err.message;
@@ -497,38 +490,42 @@ app.get("/api/search", async (req, res) => {
 /* ══════════════════════════════════════════
    /api/now — 核心選歌流程
 ══════════════════════════════════════════ */
+/* 記錄最近播過的歌，避免重複 */
+const _recentTracks = [];
+const RECENT_MAX = 10;
+
 app.get("/api/now", async (req, res) => {
   const transition = req.query.transition === "true";
   try {
-    // 1. 取得 Mood Stations 清單
-    const stations = await getMoodStations();
-
-    // 2. 並行取得 Last.fm 聆聽喜好 + 天氣
+    // 1. 並行取得 Last.fm 聆聽喜好 + 天氣
     const [listeningContext, weather] = await Promise.all([
       getCachedListeningContext(),
       getWeather(),
     ]);
 
-    // 3. 讓 Claude 選 station 並寫播報詞
-    const { say, station_id } = await getRecommendation(stations, { transition, spotifyContext: listeningContext, weather });
+    // 2. Claude 直接推薦歌曲（title + artist）並寫播報詞
+    const { say, title, artist } = await getRecommendation({
+      transition,
+      spotifyContext: listeningContext,
+      weather,
+      recentTracks: _recentTracks,
+    });
 
-    // 4. 從 station 隨機取一首歌
-    const tracks = await getMoodStationTracks(station_id);
-    if (!tracks.length) throw new Error("station 沒有曲目");
-    const track = tracks[Math.floor(Math.random() * tracks.length)];
+    // 3. 搜尋 YouTube
+    const isClassical = /古典|classical|piano sonata|symphony|concerto/i.test(title + artist);
+    const youtubeId = await searchYouTube(`${title} ${artist}`, { allowLong: isClassical });
+    console.log(`[now] ${title} — ${artist} | yt: ${youtubeId ?? "not found"}`);
 
-    // 5. 搜尋 YouTube（古典音樂不限時長）
-    const stationName = stations.find(s => s.id === station_id)?.title ?? "";
-    const isClassical = /classic|古典/i.test(stationName);
-    const youtubeId   = await searchYouTube(`${track.title} ${track.artist}`, { allowLong: isClassical });
-    console.log(`[now] ${track.title} — ${track.artist} | station: ${stationName} | yt: ${youtubeId ?? "not found"}`);
+    // 4. 記錄已播，避免重複
+    _recentTracks.push({ title, artist });
+    if (_recentTracks.length > RECENT_MAX) _recentTracks.shift();
 
-    res.json({ ...track, say, youtubeId });
+    res.json({ title, artist, say, youtubeId });
   } catch (err) {
     console.error("[api/now]", err.message);
     res.json({
-      title: "魚", artist: "陳綺貞", album: "太陽", url: null,
-      say: "窗外應該已經有光了。這首歌很適合你還沒完全醒來的那幾分鐘——陳綺貞的〈魚〉。",
+      title: "魚", artist: "陳綺貞",
+      say: "窗外應該已經有光了。陳綺貞的〈魚〉。",
     });
   }
 });
