@@ -1,7 +1,7 @@
 {
   "name": "claudio",
   "version": "0.1.0",
-  "description": "An AI DJ radio station powered by KKBOX",
+  "description": "An AI DJ radio station powered by Claude",
   "type": "module",
   "main": "index.js",
   "scripts": {
@@ -11,7 +11,7 @@
     "ai",
     "radio",
     "dj",
-    "kkbox",
+    "claude",
     "music"
   ],
   "license": "MIT",
@@ -20,7 +20,6 @@
     "axios": "^1.7.2",
     "dotenv": "^16.4.5",
     "express": "^5.2.1",
-    "selfsigned": "^5.5.0",
-    "spotify-web-api-node": "^5.0.2"
+    "selfsigned": "^5.5.0"
   }
 }

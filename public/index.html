@@ -679,6 +679,8 @@
     let prefetchNext     = null;    // 播放中背景預取的下一首
     let shouldFadeIn     = false;   // 下一首 PLAYING 時要淡入
     let pendingBroadcast = null;    // { say, title, artist } 等音樂起來後再顯示
+    let notFoundRetries  = 0;       // 連續找不到 YouTube 影片的次數
+    const MAX_NOT_FOUND_RETRIES = 2;
 
     /* ── fade constants ── */
     const FADE_OUT_MS = 1200;
@@ -872,6 +874,20 @@
         const data = prefetchNext ?? await (await fetch('/api/now?transition=true')).json();
         prefetchNext = null;
 
+        if (!data.youtubeId) {
+          notFoundRetries++;
+          if (notFoundRetries <= MAX_NOT_FOUND_RETRIES) {
+            return loadNext();
+          }
+          notFoundRetries = 0;
+          trackTitle.textContent  = data.title  ?? '—';
+          trackArtist.textContent = data.artist ?? '—';
+          typewrite('這首暫時找不到能播放的版本，稍後再試。');
+          transitioning = false;
+          return;
+        }
+        notFoundRetries = 0;
+
         pendingBroadcast = {
           say:    data.say    ?? '',
           title:  data.title  ?? data.track ?? '—',
@@ -881,8 +897,7 @@
         shouldFadeIn = true;
         if (ytPlayer && ytReady) ytPlayer.setVolume(0);
 
-        if (data.youtubeId) _loadVideo(data.youtubeId, true);
-        else transitioning = false;
+        _loadVideo(data.youtubeId, true);
 
       } catch {
         transitioning = false;
@@ -913,12 +928,23 @@
         const data = prefetchData ?? await (await fetch('/api/now')).json();
         prefetchData = null;
 
+        if (!data.youtubeId) {
+          trackTitle.textContent  = data.title  ?? '—';
+          trackArtist.textContent = data.artist ?? '—';
+          const now = new Date();
+          bubbleTime.textContent = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+          typewrite('這首暫時找不到能播放的版本，換一首給你。');
+          transitioning = true;
+          loadNext();
+          return;
+        }
+
         const say    = data.say    ?? '';
         const title  = data.title  ?? data.track ?? '—';
         const artist = data.artist ?? '—';
 
         /* 載入正確影片（若已 cue 且在播，loadVideoById 會切換） */
-        if (data.youtubeId) _loadVideo(data.youtubeId, true);
+        _loadVideo(data.youtubeId, true);
 
         /* 1.2s 後打字機，onStateChange PLAYING 負責取消靜音 */
         const now = new Date();
