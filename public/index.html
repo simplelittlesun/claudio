@@ -352,16 +352,6 @@
       position: relative;
     }
 
-    .bubble::before {
-      content: '';
-      position: absolute;
-      top: -7px; left: 24px;
-      width: 12px; height: 12px;
-      background: rgba(24,19,10,0.6);
-      border-left: 1px solid rgba(125,92,60,0.22);
-      border-top: 1px solid rgba(125,92,60,0.22);
-      transform: rotate(45deg);
-    }
 
     .bubble-meta {
       font-size: 0.62rem;
@@ -744,6 +734,13 @@
             if (e.data === YT.PlayerState.PAUSED) setPlaying(false);
             if (e.data === YT.PlayerState.ENDED)  onSongEnded();
           },
+          /* 影片不可嵌入 / 被移除 / 找不到（100,101,150,2,5）→ 自動換下一首 */
+          onError() {
+            if (transitioning) return;
+            transitioning = true;
+            setPlaying(false);
+            loadNext();
+          },
         },
       });
     };
@@ -913,13 +910,14 @@
       trackTitle.textContent  = '載入中⋯';
       trackArtist.textContent = '';
 
-      /* ── iOS / Android 自動播放解鎖 ──────────────────────────────
-         手機瀏覽器要求音頻必須在使用者手勢的「同步」呼叫中觸發。
+      /* ── 自動播放解鎖（所有平台）──────────────────────────────────
+         瀏覽器要求音頻必須在使用者手勢的「同步」呼叫中觸發。
          若等 await fetch() 回來才 play，手勢視窗已過期會被擋。
-         桌機不需要，加了反而會干擾播放器狀態，所以只在手機執行。
+         做法：在點擊當下立刻對「已預先 cue 好的影片」靜音播放，
+         取得播放權後，下方 _loadVideo() 再切到正確影片，
+         最後由 onStateChange 的 PLAYING 事件負責淡入 / 取消靜音。
       ─────────────────────────────────────────────────────────── */
-      const _isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if (_isMobile && ytReady && ytPlayer) {
+      if (ytReady && ytPlayer) {
         ytPlayer.mute();
         ytPlayer.playVideo();
       }

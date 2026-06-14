@@ -13,9 +13,18 @@ const client = new Anthropic();
 const PERSONA = readFileSync(join(__dirname, "../prompts/dj-persona.md"), "utf-8");
 const TASTE   = readFileSync(join(__dirname, "../user/taste.md"), "utf-8");
 
+const TZ = "Asia/Taipei";
+
+/* 取得台灣時區的小時（部署在 UTC 伺服器如 Railway 也正確）*/
+function taipeiHour() {
+  return Number(
+    new Intl.DateTimeFormat("en-US", { timeZone: TZ, hour: "2-digit", hour12: false }).format(new Date())
+  ) % 24;
+}
+
 /* ── 時段定義 ── */
 function timeOfDay() {
-  const h = new Date().getHours();
+  const h = taipeiHour();
   if (h >= 6  && h < 10) return "早晨";
   if (h >= 10 && h < 17) return "白天";
   if (h >= 17 && h < 21) return "傍晚";
@@ -32,7 +41,7 @@ const PERIOD_TONE = {
 /* ── 主函式 ── */
 export async function getRecommendation({ transition = false, spotifyContext = null, weather = null, recentTracks = [] } = {}) {
   const period = timeOfDay();
-  const clock  = new Date().toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" });
+  const clock  = new Date().toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", timeZone: TZ });
 
   const hasContext = spotifyContext?.tracks?.length || spotifyContext?.artists?.length;
   const spotifySection = hasContext
@@ -68,7 +77,8 @@ export async function getRecommendation({ transition = false, spotifyContext = n
     `- 直接推薦一首具體的歌曲（歌名 + 歌手），不要推薦「類型」或「風格」\n` +
     `- 選你有把握真實存在、YouTube 上找得到的歌\n` +
     `- 古典音樂以外，優先選 10 分鐘以內的曲目\n` +
-    `- 避免選不在聽眾品味範圍的歌手（如告五人、八三么）`;
+    `- 避免選不在聽眾品味範圍的歌手（如告五人、八三么）\n` +
+    `- 蘇打綠只選 2020 年（含）之後發行的歌；2020 年以前的蘇打綠時期作品一律不選`;
 
   const userMessage = transition
     ? `現在是${period}（${clock}）。\n\n剛才一首歌結束了。請以 Claudio 的身份，寫一段自然銜接的播報詞，引導聽眾進入下一首歌的氛圍，然後選擇下一首歌。播報詞不要提到歌名，直接描述當下的感受與流動，像 DJ 在說話一樣自然。`
